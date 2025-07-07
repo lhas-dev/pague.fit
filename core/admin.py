@@ -12,7 +12,13 @@ class GymAdmin(admin.ModelAdmin):
     search_fields = ['name', 'owner__username', 'city', 'state']
     inlines = [StudentInline]
 
+@admin.register(Subscription)
+class SubscriptionAdmin(admin.ModelAdmin):
+    list_display = ['student', 'plan', 'start_date', 'next_due_date', 'status', 'public_id']
+    readonly_fields = ['public_id']
+    list_filter = ['status', 'plan__gym']
+    search_fields = ['student__full_name', 'student__email', 'plan__name']
+
 admin.site.register(Plan)
 admin.site.register(Student)
-admin.site.register(Subscription)
 admin.site.register(Payment)

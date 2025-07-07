@@ -70,7 +70,7 @@ class Subscription(models.Model):
     next_due_date = models.DateField(default=get_first_day_next_month)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='ACTIVE')
     # Public ID for payment links, to avoid exposing database IDs.
-    public_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True)
 
     def __str__(self):
         return f"{self.student.full_name} - {self.plan.name} Plan"
