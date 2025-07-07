@@ -3,10 +3,22 @@
 import uuid
 from django.db import models
 from django.contrib.auth.models import User
+from datetime import datetime, date
+from dateutil.relativedelta import relativedelta
+
 class Gym(models.Model):
     name = models.CharField(max_length=100, help_text="Name of the gym")
     # OneToOneField ensures each user can own only one gym.
     owner = models.OneToOneField(User, on_delete=models.CASCADE)
+    
+    # Address fields
+    street_name = models.CharField(max_length=200, blank=True, null=True, help_text="Street name")
+    street_number = models.CharField(max_length=20, blank=True, null=True, help_text="Building/location number")
+    complement = models.CharField(max_length=100, blank=True, null=True, help_text="Additional address information (apt, suite, etc)")
+    city = models.CharField(max_length=100, blank=True, null=True, help_text="City name")
+    state = models.CharField(max_length=100, blank=True, null=True, help_text="State/province name")
+    country = models.CharField(max_length=100, blank=True, null=True, help_text="Country name")
+    postal_code = models.CharField(max_length=20, blank=True, null=True, help_text="ZIP/Postal code")
 
     class Meta:
         verbose_name_plural = "Gyms"
@@ -34,7 +46,7 @@ class Student(models.Model):
         unique_together = ('gym', 'phone_number')
 
     def __str__(self):
-        return self.full_name
+        return f"{self.full_name} ({self.gym.name})"
 
 class Subscription(models.Model):
     """
@@ -46,10 +58,16 @@ class Subscription(models.Model):
         ('CANCELED', 'Canceled'),
     )
 
+    def get_first_day_next_month():
+        """Returns the first day of next month"""
+        today = date.today()
+        first_next_month = today + relativedelta(months=1, day=1)
+        return first_next_month
+
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     plan = models.ForeignKey(Plan, on_delete=models.CASCADE)
     start_date = models.DateField()
-    next_due_date = models.DateField()
+    next_due_date = models.DateField(default=get_first_day_next_month)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='ACTIVE')
     # Public ID for payment links, to avoid exposing database IDs.
     public_id = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
