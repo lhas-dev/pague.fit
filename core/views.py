@@ -33,6 +33,13 @@ class CreatePaymentView(View):
     def post(self, request, public_id):
         subscription = get_object_or_404(Subscription, public_id=public_id)
         
+        # Check if Mercado Pago access token is configured
+        if not settings.MERCADO_PAGO_ACCESS_TOKEN:
+            return JsonResponse({
+                'success': False,
+                'error': 'Mercado Pago access token not configured'
+            }, status=500)
+        
         # Initialize Mercado Pago SDK
         sdk = mercadopago.SDK(settings.MERCADO_PAGO_ACCESS_TOKEN)
         
@@ -47,12 +54,28 @@ class CreatePaymentView(View):
                 "last_name": " ".join(subscription.student.full_name.split()[1:]) if len(subscription.student.full_name.split()) > 1 else "",
             },
             "external_reference": str(subscription.public_id),
-            "notification_url": request.build_absolute_uri(f"/core/webhook/"),
         }
         
+        # Only add notification_url if we have a valid public URL
+        webhook_url = settings.MERCADO_PAGO_WEBHOOK_URL
+        if webhook_url and webhook_url.startswith('http'):
+            payment_data["notification_url"] = webhook_url
+        
         # Create payment
-        payment_response = sdk.payment().create(payment_data)
-        payment = payment_response["response"]
+        try:
+            payment_response = sdk.payment().create(payment_data)
+            payment = payment_response["response"]
+            
+            # Log the full response for debugging
+            print(f"Payment response status: {payment_response['status']}")
+            print(f"Payment response: {payment_response}")
+            
+        except Exception as e:
+            print(f"Error creating payment: {str(e)}")
+            return JsonResponse({
+                'success': False,
+                'error': f'Payment creation failed: {str(e)}'
+            }, status=400)
         
         if payment_response["status"] == 201:
             # Save payment record
@@ -76,9 +99,13 @@ class CreatePaymentView(View):
                 'payment_data': pix_data
             })
         else:
+            # Log the error response for debugging
+            print(f"Payment creation failed. Status: {payment_response['status']}")
+            print(f"Error response: {payment_response}")
+            
             return JsonResponse({
                 'success': False,
-                'error': 'Failed to create payment'
+                'error': f'Failed to create payment. Status: {payment_response["status"]}'
             }, status=400)
 
 @csrf_exempt

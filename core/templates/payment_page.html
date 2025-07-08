@@ -159,6 +159,9 @@
 
     <script>
       let currentPaymentId = null;
+      
+      // Get CSRF token from Django template
+      const csrftoken = '{{ csrf_token }}';
 
       function createPayment() {
         const payButton = document.getElementById('payButton');
@@ -180,7 +183,7 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')
+            'X-CSRFToken': csrftoken
           }
         })
         .then(response => response.json())

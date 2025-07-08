@@ -3,4 +3,5 @@ Django==5.2.4
 python-dateutil==2.9.0.post0
 six==1.17.0
 sqlparse==0.5.3
-mercadopago==2.2.1 
+mercadopago==2.2.1
+python-dotenv==1.0.0 
