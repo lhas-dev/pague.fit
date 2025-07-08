@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Payment Page - Pague.fit</title>
+    <title>Payment Page - {{ gym.name }}</title>
     <link
       href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
       rel="stylesheet"
@@ -11,39 +11,240 @@
   </head>
   <body class="bg-gray-100 min-h-screen flex items-center justify-center">
     <div class="bg-white p-8 rounded-lg shadow-md max-w-md w-full">
-      <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-800 mb-2">Payment Details</h1>
-        <p class="text-gray-600">Transaction Reference</p>
-        <p class="text-lg font-semibold text-blue-600 mt-2">{{ public_id }}</p>
+      <!-- Gym Information -->
+      <div class="text-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ gym.name }}</h1>
+        <div class="text-gray-600 text-sm">
+          {% if gym.street_name %}
+            <p>{{ gym.street_name }}{% if gym.street_number %}, {{ gym.street_number }}{% endif %}</p>
+          {% endif %}
+          {% if gym.complement %}
+            <p>{{ gym.complement }}</p>
+          {% endif %}
+          {% if gym.city %}
+            <p>{{ gym.city }}{% if gym.state %}, {{ gym.state }}{% endif %}</p>
+          {% endif %}
+          {% if gym.postal_code %}
+            <p>{{ gym.postal_code }}</p>
+          {% endif %}
+        </div>
       </div>
 
-      <div class="space-y-4">
-        <div class="bg-gray-50 p-4 rounded-md">
-          <p class="text-sm text-gray-500">
-            Please keep this reference ID for your records:
-          </p>
-          <p class="font-mono text-gray-700 mt-1">{{ public_id }}</p>
-        </div>
+      <!-- Student Information -->
+      <div class="bg-blue-50 p-4 rounded-md mb-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-2">Student Information</h2>
+        <p class="text-gray-700"><strong>Name:</strong> {{ student.full_name }}</p>
+        <p class="text-gray-700"><strong>Plan:</strong> {{ plan.name }}</p>
+        <p class="text-gray-700"><strong>Monthly Fee:</strong> R$ {{ plan.monthly_fee }}</p>
+      </div>
 
-        <!-- Payment form placeholder -->
-        <div class="space-y-4">
-          <button
-            class="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200"
-          >
-            Proceed to Payment
-          </button>
+      <!-- Subscription Status -->
+      <div class="mb-6">
+        {% if subscription.status == 'ACTIVE' and not subscription.is_overdue %}
+          <div class="bg-green-50 border border-green-200 p-4 rounded-md">
+            <div class="flex items-center">
+              <svg class="w-5 h-5 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+              </svg>
+              <span class="text-green-800 font-semibold">Subscription Active</span>
+            </div>
+            <p class="text-green-700 mt-2">Your subscription is active until {{ subscription.next_due_date }}.</p>
+          </div>
+        {% else %}
+          <div class="bg-red-50 border border-red-200 p-4 rounded-md">
+            <div class="flex items-center">
+              <svg class="w-5 h-5 text-red-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+              </svg>
+              <span class="text-red-800 font-semibold">
+                {% if subscription.status == 'OVERDUE' or subscription.is_overdue %}
+                  Payment Overdue
+                {% else %}
+                  Subscription Inactive
+                {% endif %}
+              </span>
+            </div>
+            <p class="text-red-700 mt-2">
+              {% if subscription.is_overdue %}
+                Payment was due on {{ subscription.next_due_date }}. Please make payment to reactivate your subscription.
+              {% else %}
+                Your subscription is {{ subscription.status|lower }}. Please make payment to activate your subscription.
+              {% endif %}
+            </p>
+          </div>
 
-          <button
-            class="w-full bg-gray-200 text-gray-700 py-3 px-4 rounded-md hover:bg-gray-300 transition duration-200"
-          >
-            Cancel
-          </button>
-        </div>
+          <!-- Payment Form -->
+          <div class="space-y-4 mt-6">
+            <div class="bg-gray-50 p-4 rounded-md">
+              <h3 class="font-semibold text-gray-800 mb-2">Payment Details</h3>
+              <p class="text-gray-700">Amount: <strong>R$ {{ plan.monthly_fee }}</strong></p>
+              <p class="text-gray-600 text-sm mt-1">Reference ID: {{ public_id }}</p>
+            </div>
+            
+            <button
+              id="payButton"
+              class="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition duration-200 font-semibold"
+              onclick="createPayment()"
+            >
+              Pay with PIX - R$ {{ plan.monthly_fee }}
+            </button>
+
+            <button
+              class="w-full bg-gray-200 text-gray-700 py-3 px-4 rounded-md hover:bg-gray-300 transition duration-200"
+            >
+              Cancel
+            </button>
+          </div>
+        {% endif %}
       </div>
 
       <div class="mt-8 text-center text-sm text-gray-500">
-        <p>Need help? Contact our support team</p>
+        <p>Need help? Contact {{ gym.name }} support</p>
       </div>
     </div>
+
+    <!-- PIX Payment Modal -->
+    <div id="pixModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+      <div class="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+        <div class="text-center">
+          <h3 class="text-lg font-semibold mb-4">PIX Payment</h3>
+          <div id="pixContent">
+            <div id="loadingState" class="text-center">
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+              <p class="mt-2 text-gray-600">Creating payment...</p>
+            </div>
+            <div id="pixData" class="hidden">
+              <div class="mb-4">
+                <p class="text-sm text-gray-600 mb-2">Scan the QR code with your bank app:</p>
+                <div class="flex justify-center mb-4">
+                  <img id="qrCodeImage" src="" alt="PIX QR Code" class="max-w-48 max-h-48">
+                </div>
+              </div>
+              <div class="mb-4">
+                <p class="text-sm text-gray-600 mb-2">Or copy and paste this PIX code:</p>
+                <div class="bg-gray-100 p-3 rounded border">
+                  <p id="pixCode" class="text-sm font-mono break-all"></p>
+                </div>
+                <button 
+                  onclick="copyPixCode()" 
+                  class="mt-2 bg-green-600 text-white px-4 py-2 rounded text-sm hover:bg-green-700"
+                >
+                  Copy PIX Code
+                </button>
+              </div>
+              <div class="bg-yellow-50 p-3 rounded border border-yellow-200">
+                <p class="text-sm text-yellow-800">
+                  After making the payment, your subscription will be automatically updated.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div class="mt-6 flex gap-2">
+            <button 
+              onclick="closeModal()" 
+              class="flex-1 bg-gray-200 text-gray-700 py-2 px-4 rounded hover:bg-gray-300"
+            >
+              Close
+            </button>
+            <button 
+              onclick="checkPaymentStatus()" 
+              class="flex-1 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700"
+            >
+              Check Payment
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let currentPaymentId = null;
+
+      function createPayment() {
+        const payButton = document.getElementById('payButton');
+        const modal = document.getElementById('pixModal');
+        const loadingState = document.getElementById('loadingState');
+        const pixData = document.getElementById('pixData');
+        
+        // Show modal and loading state
+        modal.classList.remove('hidden');
+        loadingState.classList.remove('hidden');
+        pixData.classList.add('hidden');
+        
+        // Disable pay button
+        payButton.disabled = true;
+        payButton.textContent = 'Processing...';
+        
+        // Create payment
+        fetch(`/core/create-payment/{{ public_id }}/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // Show PIX data
+            currentPaymentId = data.payment_data.payment_id;
+            document.getElementById('qrCodeImage').src = 'data:image/png;base64,' + data.payment_data.qr_code_base64;
+            document.getElementById('pixCode').textContent = data.payment_data.qr_code;
+            
+            // Hide loading, show PIX data
+            loadingState.classList.add('hidden');
+            pixData.classList.remove('hidden');
+          } else {
+            alert('Error creating payment: ' + data.error);
+            closeModal();
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Error creating payment');
+          closeModal();
+        })
+        .finally(() => {
+          // Re-enable pay button
+          payButton.disabled = false;
+          payButton.textContent = 'Pay with PIX - R$ {{ plan.monthly_fee }}';
+        });
+      }
+
+      function copyPixCode() {
+        const pixCode = document.getElementById('pixCode').textContent;
+        navigator.clipboard.writeText(pixCode).then(() => {
+          alert('PIX code copied to clipboard!');
+        });
+      }
+
+      function closeModal() {
+        document.getElementById('pixModal').classList.add('hidden');
+      }
+
+      function checkPaymentStatus() {
+        if (!currentPaymentId) return;
+        
+        // In a real implementation, you'd check the payment status
+        // For now, we'll just show a message
+        alert('Payment status check would be implemented here. The webhook will automatically update your subscription when payment is confirmed.');
+      }
+
+      // Get CSRF token for Django
+      function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+          const cookies = document.cookie.split(';');
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+              break;
+            }
+          }
+        }
+        return cookieValue;
+      }
+    </script>
   </body>
 </html>
