@@ -42,6 +42,8 @@ class Student(models.Model):
     full_name = models.CharField(max_length=200)
     email = models.EmailField(blank=True, null=True, unique=True)
     phone_number = models.CharField(max_length=20, help_text="Número de telefone obrigatório para contato.")
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
     class Meta:
         unique_together = ('gym', 'phone_number')
 
@@ -75,6 +77,14 @@ class Subscription(models.Model):
     def __str__(self):
         return f"{self.student.full_name} - {self.plan.name} Plan"
 
+    def is_overdue(self):
+        return date.today() > self.next_due_date
+
+    def is_active(self):
+        return self.status == 'ACTIVE'
+    
+    def is_canceled(self):
+        return self.status == 'CANCELED'
 class Payment(models.Model):
     PAYMENT_STATUS_CHOICES = (
         ('PENDING', 'Pending'),
